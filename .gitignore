@@ -1,0 +1,11 @@
+# Compiled Java classes
+out/
+
+# Local database files
+bookings_node*.json
+
+# IDE config files
+.vscode/
+
+# Temp agent data (if any)
+.gemini/
