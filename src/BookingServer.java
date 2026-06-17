@@ -1,6 +1,11 @@
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main entry point for the Distributed Booking System.
@@ -63,6 +68,9 @@ public class BookingServer {
         // Start the server
         server.start();
 
+        // Start daily reset scheduler
+        startDailyResetScheduler(manager, communicator, handler);
+
         // Print startup banner
         System.out.println("================================================");
         System.out.println("  DISTRIBUTED BOOKING SYSTEM - NODE STARTED");
@@ -79,5 +87,31 @@ public class BookingServer {
         System.out.println("================================================");
         System.out.println("  Server is ready. Waiting for requests...");
         System.out.println("================================================");
+    }
+
+    private static void startDailyResetScheduler(BookingManager manager, NodeCommunicator communicator, BookingHandler handler) {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+        ZonedDateTime nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.getZone());
+        long initialDelayMs = Duration.between(now, nextMidnight).toMillis();
+        long periodMs = TimeUnit.DAYS.toMillis(1);
+
+        long diffMinutes = initialDelayMs / 1000 / 60;
+        System.out.println("[SCHEDULER] Daily reset scheduled. First run in " + diffMinutes + " minutes (at midnight).");
+
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                if ("coordinator".equals(handler.getRole())) {
+                    System.out.println("[SCHEDULER] Midnight reached. Executing daily bookings reset...");
+                    manager.resetBookings();
+                    communicator.replicateToWorkers(manager.getBookingsJson());
+                } else {
+                    System.out.println("[SCHEDULER] Midnight reached. Node is a worker, waiting for coordinator to replicate reset.");
+                }
+            } catch (Exception e) {
+                System.err.println("[SCHEDULER ERROR] Failed to execute daily bookings reset: " + e.getMessage());
+            }
+        }, initialDelayMs, periodMs, TimeUnit.MILLISECONDS);
     }
 }

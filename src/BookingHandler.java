@@ -19,6 +19,10 @@ public class BookingHandler {
         this.port = port;
     }
 
+    public String getRole() {
+        return role;
+    }
+
     /**
      * GET /api/bookings — Return all current booking data as JSON.
      * Both Coordinator and Worker can serve this from their local copy.

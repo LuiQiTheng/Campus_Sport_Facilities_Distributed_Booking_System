@@ -149,6 +149,22 @@ public class BookingManager {
         }
     }
 
+    /**
+     * Resets all booking records to null (fresh start).
+     */
+    public synchronized void resetBookings() {
+        for (String court : COURTS) {
+            Map<String, String> slots = bookings.get(court);
+            if (slots != null) {
+                for (String time : TIME_SLOTS) {
+                    slots.put(time, null);
+                }
+            }
+        }
+        saveBookings();
+        System.out.println("[RESET] All bookings have been cleared.");
+    }
+
     private String formatCourtName(String court) {
         return court.replace("_", " ").substring(0, 1).toUpperCase() +
                court.replace("_", " ").substring(1);
