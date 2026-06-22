@@ -232,7 +232,7 @@
         // Fetch node status info
         async function fetchNodeStatus() {
             try {
-                const res = await fetch('/api/status');
+                const res = await fetch('/api/status?t=' + new Date().getTime());
                 const data = await res.json();
                 const banner = document.getElementById('nodeBanner');
                 const roleClass = data.role === 'coordinator' ? 'role-coordinator' : 'role-worker';
@@ -248,7 +248,7 @@
         // Fetch and render all bookings
         async function fetchBookings() {
             try {
-                const res = await fetch('/api/bookings');
+                const res = await fetch('/api/bookings?t=' + new Date().getTime());
                 const data = await res.json();
                 renderCourts(data);
             } catch (e) {
